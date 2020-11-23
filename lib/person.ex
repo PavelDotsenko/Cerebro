@@ -6,4 +6,8 @@ defmodule MyProject.Person do
     field(:name, :string)
     field(:job, :string)
   end
+
+  def changeset(params \\ %{}) do
+    cast(__MODULE__, params, [:id, :name, :job])
+  end
 end

@@ -2,6 +2,7 @@ defmodule Cerebro do
   def load() do
     quote do
       use Cerebro.Schema
+      use Cerebro.Changeset
 
       # import Plug.Conn
       # import PulsarWeb.Gettext

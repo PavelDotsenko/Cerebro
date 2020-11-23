@@ -5,7 +5,6 @@ defmodule Cerebro.Schema do
   defmacro __using__(_) do
     quote do
       import Cerebro.Schema, only: [schema: 2, field: 2, set_fields: 1]
-      alias :mnesia, as: Mnesia
     end
   end
 
@@ -13,25 +12,31 @@ defmodule Cerebro.Schema do
 
   defmacro schema(name, do: fields), do: add_fields(name, fields)
 
-  defmacro set_fields(opts) do
+  def set_fields(opts) do
     quote do
       %__MODULE__{unquote(Map.to_list(opts))}
     end
   end
 
+  def field_types() do
+    quote do
+      Module.get_attribute(__MODULE__, :field_types)
+    end
+  end
+
   defp add_fields(table_name, fields) do
     name = get_table_name(Macro.escape(table_name))
-    fields = get_fields(Macro.escape(fields))
+    field_types = get_fields(Macro.escape(fields))
+    fields = Enum.map(field_types, fn {key, _type} -> key end)
 
     quote do
-      meta = %Cerebro.Metadata{schema: unquote(name), context: __MODULE__}
+      meta = %Cerebro.Metadata{
+        schema: unquote(name),
+        context: __MODULE__,
+        field_types: unquote(field_types) |> Map.new()
+      }
 
-      data_fields = Enum.map(unquote(fields), fn {key, _type} -> key end)
-
-      Module.put_attribute(__MODULE__, :field_types, unquote(fields))
-      Module.put_attribute(__MODULE__, :table_fields, data_fields ++ [{:__meta__, meta}])
-
-      defstruct Module.get_attribute(__MODULE__, :table_fields)
+      defstruct unquote(fields) ++ [{:__meta__, meta}]
     end
   end
 
